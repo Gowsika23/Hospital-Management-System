@@ -1,0 +1,740 @@
+<div class="dashboard-page">
+  <div class="dashboard-ambient dashboard-ambient-one"></div>
+  <div class="dashboard-ambient dashboard-ambient-two"></div>
+
+  <div class="dashboard-shell">
+    <app-top-nav
+      [solid]="true"
+      [showUserBadge]="true"
+      [userName]="currentUser?.name ?? ''"
+      [brand]="role + ' Console'"
+      [activeAction]="activeTab"
+      [navItems]="
+        role === 'Patient'
+          ? [
+              { label: 'Search Doctors', action: 'search' },
+              { label: 'Book Appointment', action: 'book' },
+              { label: 'History', action: 'history' },
+              { label: 'Records', action: 'records' }
+            ]
+          : role === 'Doctor'
+            ? [
+                { label: 'Appointments', action: 'appointments' },
+                { label: 'Patients', action: 'patients' },
+                { label: 'Records', action: 'records' }
+              ]
+            : [
+                { label: 'Overview', action: 'overview' },
+                { label: 'Doctors', action: 'doctors' },
+                { label: 'Patients', action: 'patients' },
+                { label: 'Appointments', action: 'appointments' },
+                { label: 'Records', action: 'records' }
+              ]
+      "
+      ctaPrimary="Logout"
+      (itemClick)="setTab($event)"
+      (primaryClick)="logout()"
+    />
+
+    <section class="welcome-panel">
+      <div>
+        <span class="role-label">{{ role }} Dashboard</span>
+        <h1>Welcome, {{ currentUser?.name }}</h1>
+        <p>Manage hospital workflows with clean, role-specific modules and modern glassmorphism UI.</p>
+      </div>
+      <div class="role-note">
+        <strong>{{ role }}</strong>
+        <span>{{ currentUser?.email }}</span>
+      </div>
+    </section>
+
+    @if (pageError) {
+      <div class="status-banner status-error">{{ pageError }}</div>
+    }
+
+    @if (actionMessage) {
+      <div class="status-banner status-success">{{ actionMessage }}</div>
+    }
+
+    <section class="stats-grid">
+      @for (card of statCards; track card.title; let i = $index) {
+        <article class="stat-card" [class]="'stat-card stat-' + card.accent">
+          <span>{{ card.title }}</span>
+          <h3>{{ animatedStats()[i] }}</h3>
+          <p>{{ card.subtitle }}</p>
+        </article>
+      }
+    </section>
+
+    <section class="insight-grid">
+      <article class="insight-card">
+        <span>Today</span>
+        <strong>{{ todaysAppointments }}</strong>
+        <p>Appointments scheduled for today</p>
+      </article>
+      <article class="insight-card">
+        <span>Completed</span>
+        <strong>{{ completedAppointments }}</strong>
+        <p>Consultations closed successfully</p>
+      </article>
+      <article class="insight-card">
+        <span>Booked</span>
+        <strong>{{ bookedAppointments }}</strong>
+        <p>Upcoming care pipeline in progress</p>
+      </article>
+      <article class="insight-card">
+        <span>Cancelled</span>
+        <strong>{{ cancelledAppointments }}</strong>
+        <p>Requests that need rescheduling attention</p>
+      </article>
+    </section>
+
+    <section class="spotlight-grid">
+      <article class="spotlight-card large-spotlight">
+        <div class="ops-grid">
+          <div class="ops-copy">
+            <div class="spotlight-head">
+              <div>
+                <span class="capsule-label">Operations Pulse</span>
+                <h2>Live hospital operations at a glance.</h2>
+              </div>
+            </div>
+
+            <p class="ops-description">
+              A more visual summary of staffing, patient flow, bookings, and clinical updates for your judging demo.
+            </p>
+
+            <div class="mini-metrics">
+              <div>
+                <strong>{{ doctors().length }}</strong>
+                <span>Specialists</span>
+              </div>
+              <div>
+                <strong>{{ patients().length }}</strong>
+                <span>Patients</span>
+              </div>
+              <div>
+                <strong>{{ records().length }}</strong>
+                <span>Clinical Notes</span>
+              </div>
+            </div>
+
+            <div class="capacity-list">
+              <div class="capacity-row">
+                <div class="capacity-label">
+                  <strong>Doctor Network</strong>
+                  <span>{{ doctors().length }} active</span>
+                </div>
+                <div class="capacity-track">
+                  <span class="capacity-fill capacity-fill-aqua" [style.width.%]="doctors().length ? 82 : 18"></span>
+                </div>
+              </div>
+
+              <div class="capacity-row">
+                <div class="capacity-label">
+                  <strong>Patient Flow</strong>
+                  <span>{{ patients().length }} registered</span>
+                </div>
+                <div class="capacity-track">
+                  <span class="capacity-fill capacity-fill-mint" [style.width.%]="patients().length ? 68 : 16"></span>
+                </div>
+              </div>
+
+              <div class="capacity-row">
+                <div class="capacity-label">
+                  <strong>Clinical Updates</strong>
+                  <span>{{ records().length }} records</span>
+                </div>
+                <div class="capacity-track">
+                  <span class="capacity-fill capacity-fill-gold" [style.width.%]="records().length ? 58 : 12"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="ops-visual">
+            <div
+              class="donut-chart"
+              [style.background]="
+                'conic-gradient(#7fe7ff 0% ' +
+                (appointments().length ? (bookedAppointments / appointments().length) * 100 : 0) +
+                '%, #66e1b7 ' +
+                (appointments().length ? (bookedAppointments / appointments().length) * 100 : 0) +
+                '% ' +
+                (appointments().length ? ((bookedAppointments + completedAppointments) / appointments().length) * 100 : 0) +
+                '%, #ff9aa9 ' +
+                (appointments().length ? ((bookedAppointments + completedAppointments) / appointments().length) * 100 : 0) +
+                '% 100%)'
+              "
+            >
+              <div class="donut-core">
+                <strong>{{ appointments().length }}</strong>
+                <span>Total Appointments</span>
+              </div>
+            </div>
+
+            <div class="donut-legend">
+              <div>
+                <span class="legend-dot legend-booked"></span>
+                <label>Booked / Confirmed</label>
+                <strong>{{ bookedAppointments }}</strong>
+              </div>
+              <div>
+                <span class="legend-dot legend-completed"></span>
+                <label>Completed</label>
+                <strong>{{ completedAppointments }}</strong>
+              </div>
+              <div>
+                <span class="legend-dot legend-cancelled"></span>
+                <label>Cancelled</label>
+                <strong>{{ cancelledAppointments }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="spotlight-card">
+        <span class="capsule-label">Recent Activity</span>
+        <h3>Latest appointment flow</h3>
+        @if (recentAppointments.length) {
+          <div class="timeline-list">
+            @for (appointment of recentAppointments; track appointment.id) {
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div>
+                  <strong>{{ appointment.patientName }}</strong>
+                  <p>{{ appointment.doctorName }} | {{ appointment.status }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state compact-empty">
+            <strong>No recent appointments yet</strong>
+            <p>Add bookings from Swagger or the patient dashboard to light up this panel.</p>
+          </div>
+        }
+      </article>
+    </section>
+
+    <section class="chart-panel">
+      <article class="spotlight-card chart-card">
+        <div class="panel-head">
+          <h2>Appointment Status Visual</h2>
+          <p>A quick, judge-friendly view of your current workflow distribution.</p>
+        </div>
+
+        <div class="status-chart">
+          <div class="status-chart-row">
+            <div class="status-chart-label">
+              <strong>Booked / Confirmed</strong>
+              <span>{{ bookedAppointments }}</span>
+            </div>
+            <div class="status-track">
+              <span
+                class="status-fill status-fill-booked"
+                [style.width.%]="appointments().length ? (bookedAppointments / appointments().length) * 100 : 0"
+              ></span>
+            </div>
+          </div>
+
+          <div class="status-chart-row">
+            <div class="status-chart-label">
+              <strong>Completed</strong>
+              <span>{{ completedAppointments }}</span>
+            </div>
+            <div class="status-track">
+              <span
+                class="status-fill status-fill-completed"
+                [style.width.%]="appointments().length ? (completedAppointments / appointments().length) * 100 : 0"
+              ></span>
+            </div>
+          </div>
+
+          <div class="status-chart-row">
+            <div class="status-chart-label">
+              <strong>Cancelled</strong>
+              <span>{{ cancelledAppointments }}</span>
+            </div>
+            <div class="status-track">
+              <span
+                class="status-fill status-fill-cancelled"
+                [style.width.%]="appointments().length ? (cancelledAppointments / appointments().length) * 100 : 0"
+              ></span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    @if (role === 'Admin') {
+      <section class="content-grid">
+        @if (activeTab === 'overview' || activeTab === 'doctors') {
+          <div class="panel panel-form">
+            <div class="panel-head">
+              <h2>{{ editingDoctorId ? 'Update Doctor' : 'Add Doctor' }}</h2>
+              <p>Admin can add, update, search, and delete doctors instantly.</p>
+            </div>
+
+            <form [formGroup]="doctorForm" class="grid-form" (ngSubmit)="saveDoctor()">
+              <input type="text" formControlName="name" placeholder="Doctor Name" />
+              <input type="email" formControlName="email" placeholder="Doctor Email" />
+              <input type="text" formControlName="specialization" placeholder="Specialization" />
+              <input type="text" formControlName="department" placeholder="Department" />
+              <input type="text" formControlName="qualification" placeholder="Qualification" />
+              <input type="text" formControlName="availability" placeholder="Availability" />
+              <input type="number" formControlName="consultationFee" placeholder="Consultation Fee" />
+              <button type="submit" class="action-btn">
+                {{ editingDoctorId ? 'Update Doctor' : 'Add Doctor' }}
+              </button>
+            </form>
+          </div>
+        }
+
+        @if (activeTab === 'overview' || activeTab === 'doctors') {
+          <div class="panel">
+            <div class="panel-head inline-head">
+              <div>
+                <h2>Doctor Management</h2>
+                <p>Search by name, department, or specialization.</p>
+              </div>
+              <input [(ngModel)]="doctorSearch" (input)="loadFilteredDoctorsFromApi()" [ngModelOptions]="{ standalone: true }" placeholder="Search doctor" />
+            </div>
+            <div class="card-list">
+              @for (doctor of filteredDoctors; track doctor.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ doctor.name }}</h3>
+                    <p>{{ doctor.specialization }} | {{ doctor.department }}</p>
+                    <small>{{ doctor.qualification }} | {{ doctor.availability }}</small>
+                  </div>
+                  <strong>Rs. {{ doctor.consultationFee }}</strong>
+                  <div class="entity-actions">
+                    <button type="button" (click)="editDoctor(doctor)">Edit</button>
+                    <button type="button" class="danger-btn" (click)="deleteDoctor(doctor.id)">Delete</button>
+                  </div>
+                </article>
+              }
+              @if (!filteredDoctors.length) {
+                <div class="empty-state">
+                  <strong>No doctors found</strong>
+                  <p>Create doctors from the admin form or clear the search filters.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'patients') {
+          <div class="panel panel-full">
+            <div class="panel-head inline-head">
+              <div>
+                <h2>Patient Management</h2>
+                <p>Track patient registrations and deactivate records when needed.</p>
+              </div>
+              <input [(ngModel)]="patientSearch" [ngModelOptions]="{ standalone: true }" placeholder="Search patient" />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (patient of filteredPatients; track patient.id) {
+                    <tr>
+                      <td>{{ patient.name }}</td>
+                      <td>{{ patient.email }}</td>
+                      <td>{{ patient.phoneNumber || 'NA' }}</td>
+                      <td>{{ patient.isActive ? 'Active' : 'Inactive' }}</td>
+                      <td>
+                        <button type="button" class="danger-btn" (click)="deactivatePatient(patient.id)">
+                          Deactivate
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (!filteredPatients.length) {
+                <div class="empty-state table-empty">
+                  <strong>No patients available</strong>
+                  <p>Signup a patient or seed records from Swagger to populate this module.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'appointments') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Appointment Management</h2>
+              <p>Monitor every booking and its current status.</p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (appointment of appointments(); track appointment.id) {
+                    <tr>
+                      <td>{{ appointment.patientName }}</td>
+                      <td>{{ appointment.doctorName }}</td>
+                      <td>{{ appointment.appointmentDate | date: 'dd MMM yyyy' }}</td>
+                      <td>{{ appointment.appointmentTime }}</td>
+                      <td>{{ appointment.symptoms }}</td>
+                      <td>{{ appointment.status }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (!appointments().length) {
+                <div class="empty-state table-empty">
+                  <strong>No appointments yet</strong>
+                  <p>Book one from the patient portal or create appointments through Swagger.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'records') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Medical Records Overview</h2>
+              <p>Clinical records visible for admin oversight.</p>
+            </div>
+            <div class="card-list">
+              @for (record of records(); track record.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ record.patientName }}</h3>
+                    <p>Doctor: {{ record.doctorName }}</p>
+                    <small>{{ record.diagnosis }} | {{ record.prescription }}</small>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" (click)="editRecord(record)">Edit</button>
+                    <button type="button" class="danger-btn" (click)="deleteRecord(record.id)">Delete</button>
+                  </div>
+                </article>
+              }
+              @if (!records().length) {
+                <div class="empty-state">
+                  <strong>No medical records yet</strong>
+                  <p>Create a consultation record to make this overview section more informative.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    @if (role === 'Doctor') {
+      <section class="content-grid">
+        @if (activeTab === 'appointments') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Assigned Appointments</h2>
+              <p>View your full schedule and patient symptoms before consultation.</p>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (appointment of appointments(); track appointment.id) {
+                    <tr>
+                      <td>{{ appointment.patientName }}</td>
+                      <td>{{ appointment.appointmentDate | date: 'dd MMM yyyy' }}</td>
+                      <td>{{ appointment.appointmentTime }}</td>
+                      <td>{{ appointment.symptoms }}</td>
+                      <td>{{ appointment.status }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (!appointments().length) {
+                <div class="empty-state table-empty">
+                  <strong>No doctor appointments yet</strong>
+                  <p>Once patients book visits, the doctor schedule will appear here.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'patients') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Assigned Patients</h2>
+              <p>Patients linked to your appointments and records.</p>
+            </div>
+            <div class="card-list">
+              @for (patient of filteredPatients; track patient.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ patient.name }}</h3>
+                    <p>{{ patient.email }}</p>
+                    <small>{{ patient.phoneNumber || 'Phone not provided' }}</small>
+                  </div>
+                </article>
+              }
+              @if (!filteredPatients.length) {
+                <div class="empty-state">
+                  <strong>No assigned patients yet</strong>
+                  <p>Patient cards will appear once appointments or records are linked to this doctor.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'records') {
+          <div class="panel panel-form">
+            <div class="panel-head">
+              <h2>{{ editingRecordId ? 'Update Medical Record' : 'Create Medical Record' }}</h2>
+              <p>Doctors can add diagnosis, prescription, notes, and treatment details.</p>
+            </div>
+
+            <form [formGroup]="recordForm" class="grid-form" (ngSubmit)="saveRecord()">
+              <select formControlName="patientId">
+                <option [value]="0">Select Patient</option>
+                @for (patient of patients(); track patient.id) {
+                  <option [value]="patient.id">{{ patient.name }}</option>
+                }
+              </select>
+              <select formControlName="appointmentId">
+                <option [value]="0">Select Appointment (Optional)</option>
+                @for (appointment of appointments(); track appointment.id) {
+                  <option [value]="appointment.id">{{ appointment.patientName }} - {{ appointment.appointmentDate | date: 'dd MMM' }}</option>
+                }
+              </select>
+              <textarea formControlName="diagnosis" placeholder="Diagnosis"></textarea>
+              <textarea formControlName="prescription" placeholder="Prescription"></textarea>
+              <textarea formControlName="notes" placeholder="Notes"></textarea>
+              <textarea formControlName="treatmentDetails" placeholder="Treatment details"></textarea>
+              <button type="submit" class="action-btn">
+                {{ editingRecordId ? 'Update Record' : 'Save Record' }}
+              </button>
+            </form>
+          </div>
+        }
+
+        @if (activeTab === 'records') {
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Medical Records</h2>
+              <p>Your authored records appear here.</p>
+            </div>
+            <div class="card-list">
+              @for (record of records(); track record.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ record.patientName }}</h3>
+                    <p>{{ record.diagnosis }}</p>
+                    <small>{{ record.prescription }}</small>
+                  </div>
+                  <div class="entity-actions">
+                    <button type="button" (click)="editRecord(record)">Edit</button>
+                    <button type="button" class="danger-btn" (click)="deleteRecord(record.id)">Delete</button>
+                  </div>
+                </article>
+              }
+              @if (!records().length) {
+                <div class="empty-state">
+                  <strong>No records created yet</strong>
+                  <p>Use the form on the left to add diagnosis, prescription, and treatment details.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    @if (role === 'Patient') {
+      <section class="content-grid">
+        @if (activeTab === 'search') {
+          <div class="panel panel-full">
+            <div class="panel-head inline-head">
+              <div>
+                <h2>Search Doctors</h2>
+                <p>Filter by specialization, department, or availability.</p>
+              </div>
+              <button type="button" class="action-btn secondary-action-btn" (click)="loadFilteredDoctorsFromApi()">
+                Apply Filters
+              </button>
+            </div>
+            <div class="filter-grid">
+              <input [(ngModel)]="doctorSearch" [ngModelOptions]="{ standalone: true }" placeholder="Search doctor or specialty" />
+              <input [(ngModel)]="filterSpecialization" [ngModelOptions]="{ standalone: true }" placeholder="Specialization" />
+              <input [(ngModel)]="filterDepartment" [ngModelOptions]="{ standalone: true }" placeholder="Department" />
+              <input [(ngModel)]="filterAvailability" [ngModelOptions]="{ standalone: true }" placeholder="Availability" />
+            </div>
+
+            <div class="card-list doctor-card-list">
+              @for (doctor of filteredDoctors; track doctor.id) {
+                <article class="entity-card doctor-search-card">
+                  <div>
+                    <h3>{{ doctor.name }}</h3>
+                    <p>{{ doctor.qualification }}</p>
+                    <small>{{ doctor.specialization }} | {{ doctor.department }}</small>
+                  </div>
+                  <div class="doctor-search-meta">
+                    <span>{{ doctor.availability }}</span>
+                    <strong>Rs. {{ doctor.consultationFee }}</strong>
+                    <button type="button" class="action-btn doctor-book-btn" (click)="chooseDoctorForBooking(doctor)">
+                      Book Now
+                    </button>
+                  </div>
+                </article>
+              }
+              @if (!filteredDoctors.length) {
+                <div class="empty-state">
+                  <strong>No doctors match your filters</strong>
+                  <p>Try clearing specialization, department, or availability to see more results.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'book') {
+          <div class="panel panel-form">
+            <div class="panel-head">
+              <h2>Book Appointment</h2>
+              <p>Choose a doctor and confirm the appointment request.</p>
+            </div>
+
+            <div class="booking-layout">
+              <div class="booking-side-card">
+                <span class="capsule-label">Booking Tips</span>
+                <h3>Pick your doctor, date, and symptoms clearly.</h3>
+                <p>
+                  You can come here directly from the doctor search list using the
+                  <strong>Book Now</strong> button.
+                </p>
+
+                <div class="booking-mini-list">
+                  <div>
+                    <strong>{{ doctors().length }}</strong>
+                    <span>Doctors Available</span>
+                  </div>
+                  <div>
+                    <strong>{{ appointments().length }}</strong>
+                    <span>Your Appointments</span>
+                  </div>
+                </div>
+              </div>
+
+              <form [formGroup]="appointmentForm" class="grid-form booking-form" (ngSubmit)="submitAppointment()">
+                <input type="text" formControlName="patientName" placeholder="Patient Name" />
+                <select formControlName="doctorId">
+                  <option [value]="0">Select Doctor</option>
+                  @for (doctor of doctors(); track doctor.id) {
+                    <option [value]="doctor.id">{{ doctor.name }} - {{ doctor.specialization }}</option>
+                  }
+                </select>
+                <input type="date" formControlName="appointmentDate" />
+                <input type="time" formControlName="appointmentTime" />
+                <textarea formControlName="symptoms" placeholder="Symptoms"></textarea>
+                <label class="confirm-check">
+                  <input type="checkbox" formControlName="confirmBooking" />
+                  I confirm this appointment booking.
+                </label>
+                <button type="submit" class="action-btn">Confirm Appointment</button>
+              </form>
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'history') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Appointment History</h2>
+              <p>Track current, confirmed, and cancelled appointments.</p>
+            </div>
+            <div class="card-list">
+              @for (appointment of appointments(); track appointment.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ appointment.doctorName }}</h3>
+                    <p>{{ appointment.appointmentDate | date: 'dd MMM yyyy' }} at {{ appointment.appointmentTime }}</p>
+                    <small>{{ appointment.symptoms }}</small>
+                  </div>
+                  <div class="entity-actions">
+                    <span class="status-pill">{{ appointment.status }}</span>
+                    @if (appointment.status !== 'Cancelled') {
+                      <button type="button" class="danger-btn" (click)="cancelAppointment(appointment)">
+                        Cancel
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+              @if (!appointments().length) {
+                <div class="empty-state">
+                  <strong>No appointment history yet</strong>
+                  <p>Book your first appointment to start tracking consultations here.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (activeTab === 'records') {
+          <div class="panel panel-full">
+            <div class="panel-head">
+              <h2>Medical Records</h2>
+              <p>Review diagnosis, prescriptions, and treatment guidance from doctors.</p>
+            </div>
+            <div class="card-list">
+              @for (record of records(); track record.id) {
+                <article class="entity-card">
+                  <div>
+                    <h3>{{ record.doctorName }}</h3>
+                    <p>{{ record.diagnosis }}</p>
+                    <small>{{ record.prescription }}</small>
+                  </div>
+                  <div class="record-body">
+                    <span>{{ record.treatmentDetails }}</span>
+                    <small>{{ record.notes }}</small>
+                  </div>
+                </article>
+              }
+              @if (!records().length) {
+                <div class="empty-state">
+                  <strong>No medical records found</strong>
+                  <p>Your diagnosis and prescriptions will appear here after doctor updates.</p>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</div>

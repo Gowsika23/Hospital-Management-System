@@ -1,0 +1,285 @@
+<div class="landing-page" id="home">
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <section class="hero-shell">
+    <app-top-nav
+      [navItems]="navItems"
+      ctaSecondary="Login"
+      ctaPrimary="Signup"
+      (itemClick)="scrollTo($event)"
+      (secondaryClick)="openAuth('login')"
+      (primaryClick)="openAuth('signup')"
+    />
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Smart care. Clean workflow. Faster decisions.</span>
+        <h1>Premium Hospital Management for Admins, Doctors, and Patients.</h1>
+        <p>
+          Run appointments, doctor records, patient journeys, and medical history from one
+          elegant platform built for hackathon-ready demos and real workflows.
+        </p>
+        <div class="hero-actions">
+          <button type="button" class="primary-hero-btn" (click)="openAuth('login')">
+            Login Now
+          </button>
+          <button type="button" class="secondary-hero-btn" (click)="openAuth('signup')">
+            Create Account
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <article>
+            <h3>3 Roles</h3>
+            <p>Admin, doctor, and patient-ready dashboards.</p>
+          </article>
+          <article>
+            <h3>Live CRUD</h3>
+            <p>Fast updates without refreshing the page.</p>
+          </article>
+          <article>
+            <h3>Modern UI</h3>
+            <p>Glass cards, gradients, motion, and responsive layout.</p>
+          </article>
+        </div>
+
+        <div class="trust-strip">
+          <span>Live appointment flow</span>
+          <span>SQL Server ready</span>
+          <span>Angular standalone UI</span>
+        </div>
+      </div>
+
+      <div class="hero-panel">
+        <div class="hero-card highlight-card">
+          <span>Today’s care pulse</span>
+          <h3>Appointments are smoother when every role gets a focused workspace.</h3>
+          <ul>
+            <li>Admin manages doctors, patients, appointments, and records.</li>
+            <li>Doctors review schedules and update medical notes quickly.</li>
+            <li>Patients search doctors, book visits, and track history.</li>
+          </ul>
+        </div>
+        <div class="hero-card mini-card">
+          <p>Trusted demo logins</p>
+          <strong>admin@hospital.com</strong>
+          <strong>doctor@hospital.com</strong>
+          <strong>patient@hospital.com</strong>
+        </div>
+        <div class="hero-card mini-chart-card">
+          <div class="chart-head">
+            <span>Operational Snapshot</span>
+            <strong>Care Flow</strong>
+          </div>
+          <div class="chart-bars">
+            <div class="bar-row">
+              <label>Doctors</label>
+              <div class="bar-track"><span class="bar-fill bar-fill-one"></span></div>
+            </div>
+            <div class="bar-row">
+              <label>Appointments</label>
+              <div class="bar-track"><span class="bar-fill bar-fill-two"></span></div>
+            </div>
+            <div class="bar-row">
+              <label>Records</label>
+              <div class="bar-track"><span class="bar-fill bar-fill-three"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="info-section" id="about">
+    <div class="section-heading">
+      <span>About Platform</span>
+      <h2>Built to be simple during judging and complete during demonstration.</h2>
+    </div>
+    <div class="info-grid">
+      <article class="info-card">
+        <h3>Role-Based Experience</h3>
+        <p>Each user gets a dedicated top-navbar dashboard with only the tools they need.</p>
+      </article>
+      <article class="info-card">
+        <h3>Easy Authentication</h3>
+        <p>Clean localStorage session handling with strict inline validation and no JWT complexity.</p>
+      </article>
+      <article class="info-card">
+        <h3>Backend Clarity</h3>
+        <p>Simple EF Core entities, SQL Server schema, reusable services, and REST APIs.</p>
+      </article>
+    </div>
+
+    <div class="feature-ribbon">
+      <article>
+        <strong>Doctor CRUD</strong>
+        <p>Immediate updates on the admin dashboard.</p>
+      </article>
+      <article>
+        <strong>Appointment Lifecycle</strong>
+        <p>Book, confirm, complete, and cancel smoothly.</p>
+      </article>
+      <article>
+        <strong>Medical Records</strong>
+        <p>Diagnosis, prescription, notes, and treatment in one flow.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="info-section" id="doctors">
+    <div class="section-heading">
+      <span>Doctor Highlights</span>
+      <h2>Showcase specialists with premium cards and quick patient-friendly details.</h2>
+      @if (!doctorsLoadedFromApi) {
+        <p class="subtle-note">Featured specialists preview</p>
+      }
+    </div>
+    <div class="doctor-grid">
+      @for (doctor of featuredDoctors; track doctor.id) {
+        <article class="doctor-card">
+          <div class="doctor-badge">{{ doctor.specialization }}</div>
+          <h3>{{ doctor.name }}</h3>
+          <p>{{ doctor.qualification }}</p>
+          <div class="doctor-meta">
+            <span>{{ doctor.department }}</span>
+            <span>{{ doctor.availability }}</span>
+          </div>
+          <strong>Consultation Fee: Rs. {{ doctor.consultationFee }}</strong>
+        </article>
+      }
+    </div>
+  </section>
+
+  @if (authModalOpen) {
+    <div class="auth-overlay" (click)="closeAuth()">
+      <div class="auth-modal" (click)="$event.stopPropagation()">
+        <div class="auth-toggle">
+          <button
+            type="button"
+            [class.active]="authMode === 'login'"
+            (click)="authMode = 'login'"
+          >
+            Login
+          </button>
+          <button
+            type="button"
+            [class.active]="authMode === 'signup'"
+            (click)="authMode = 'signup'"
+          >
+            Signup
+          </button>
+        </div>
+
+        @if (authMode === 'login') {
+          <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()">
+            <h2>Welcome Back</h2>
+            <p>Login to your hospital workspace.</p>
+
+            <label>
+              Email
+              <input type="email" formControlName="email" placeholder="you@example.com" />
+            </label>
+            @if (loginForm.controls.email.touched && loginForm.controls.email.errors) {
+              <small class="error-text">
+                @if (loginForm.controls.email.errors['required']) { Email is required. }
+                @if (loginForm.controls.email.errors['pattern']) { Enter a valid email address. }
+              </small>
+            }
+
+            <label>
+              Password
+              <input type="password" formControlName="password" placeholder="Enter password" />
+            </label>
+            @if (loginForm.controls.password.touched && loginForm.controls.password.errors) {
+              <small class="error-text">
+                @if (loginForm.controls.password.errors['required']) { Password is required. }
+                @if (loginForm.controls.password.errors['pattern']) {
+                  Password must contain uppercase, lowercase, number and special character.
+                }
+              </small>
+            }
+
+            @if (authError) {
+              <div class="server-error">{{ authError }}</div>
+            }
+
+            <button type="submit" class="submit-btn" [disabled]="loginLoading">
+              {{ loginLoading ? 'Logging in...' : 'Login' }}
+            </button>
+          </form>
+        }
+
+        @if (authMode === 'signup') {
+          <form class="auth-form" [formGroup]="signupForm" (ngSubmit)="submitSignup()">
+            <h2>Create Account</h2>
+            <p>Signup and get redirected to your role dashboard.</p>
+
+            <label>
+              Full Name
+              <input type="text" formControlName="name" placeholder="Enter your full name" />
+            </label>
+            @if (signupForm.controls.name.touched && signupForm.controls.name.errors) {
+              <small class="error-text">
+                @if (signupForm.controls.name.errors['required']) { Name is required. }
+                @if (signupForm.controls.name.errors['minlength']) { Minimum 3 characters required. }
+              </small>
+            }
+
+            <label>
+              Email
+              <input type="email" formControlName="email" placeholder="you@example.com" />
+            </label>
+            @if (signupForm.controls.email.touched && signupForm.controls.email.errors) {
+              <small class="error-text">
+                @if (signupForm.controls.email.errors['required']) { Email is required. }
+                @if (signupForm.controls.email.errors['pattern']) { Enter a valid email address. }
+              </small>
+            }
+
+            <label>
+              Password
+              <input type="password" formControlName="password" placeholder="Strong password" />
+            </label>
+            @if (signupForm.controls.password.touched && signupForm.controls.password.errors) {
+              <small class="error-text">
+                @if (signupForm.controls.password.errors['required']) { Password is required. }
+                @if (signupForm.controls.password.errors['pattern']) {
+                  Use 8+ chars with uppercase, lowercase, number, and special character.
+                }
+              </small>
+            }
+
+            <label>
+              Confirm Password
+              <input type="password" formControlName="confirmPassword" placeholder="Confirm password" />
+            </label>
+            @if (signupForm.controls.confirmPassword.touched && signupForm.controls.confirmPassword.errors) {
+              <small class="error-text">
+                @if (signupForm.controls.confirmPassword.errors['required']) { Confirm password is required. }
+                @if (signupForm.controls.confirmPassword.errors['mismatch']) { Passwords do not match. }
+              </small>
+            }
+
+            <label>
+              Role
+              <select formControlName="role">
+                <option value="Patient">Patient</option>
+                <option value="Doctor">Doctor</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </label>
+
+            @if (authError) {
+              <div class="server-error">{{ authError }}</div>
+            }
+
+            <button type="submit" class="submit-btn" [disabled]="signupLoading">
+              {{ signupLoading ? 'Creating...' : 'Signup' }}
+            </button>
+          </form>
+        }
+      </div>
+    </div>
+  }
+</div>
