@@ -1,0 +1,16 @@
+# Angular
+HospitalUI/node_modules/
+HospitalUI/dist/
+HospitalUI/.angular/
+
+# .NET
+HospitalAPI/bin/
+HospitalAPI/obj/
+HospitalAPI/.vs/
+
+# VS
+.vs/
+.vscode/
+
+# Logs
+*.log
